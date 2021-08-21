@@ -1,9 +1,9 @@
-import { AttributeDefinition, Model } from "./model";
+import { AttributeDefinition } from "./attributes";
+import { Model } from "./model";
 import { registerAttribute } from "./private";
-import { Collection, DefinedCollection, DefinedReference, Reference } from "./relation";
-
-
-export type Constructor<T> = { new(...args) : T };
+import { Constructor } from "../utils";
+import { Collection, DefinedCollection } from "./collection";
+import { DefinedReference, Reference } from "./reference";
 
 /**
  * The model specified in HasMany() has a local reference to this model,
@@ -79,18 +79,15 @@ export function BelongsTo<T>(type : Constructor<T>): Reference<T> {
     });
 }
 
-export function Attribute() {
+export function Relation() {
     return (target : Object, propertyKey) => {
-        let designType = Reflect.getMetadata('design:type', target, propertyKey);
         let $schema = <typeof Model>target.constructor;
         let definition : AttributeDefinition = {
-            designType,
             name: propertyKey,
-            primaryKey: false // TODO
+            primaryKey: false
         };
 
-        if (designType === Object)
-            $schema[registerAttribute](propertyKey, definition);
+        $schema[registerAttribute](propertyKey, definition);
 
         Object.defineProperty(target, propertyKey, {
             enumerable: true,
@@ -120,5 +117,6 @@ export function Scope() {
             name: propertyKey,
             primaryKey: false
         };
+        $schema[registerAttribute](propertyKey, definition);
     }
 }

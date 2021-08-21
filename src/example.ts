@@ -1,14 +1,14 @@
 import "reflect-metadata";
-import { Attribute, HasMany, HasOne } from "./decorators";
-import { Model, ModelOptions } from "./model";
-import { Collection, Reference } from "./relation";
+import { Attribute, Id } from "./core/attributes";
+import { Model } from "./core/model";
+import { HasMany, HasOne } from "./core/relations";
 
-export class Post {
-
+export class Post extends Model {
+    @Id() id : string;
 }
 
-export class User {
-
+export class User extends Model {
+    @Id() id : string;
 }
 
 export class Blog extends Model {
@@ -20,15 +20,20 @@ export class Blog extends Model {
     }
 }
 
+export class FrogLeg extends Model {
+    @Id() id : string;
+}
+
+export class FrogArm extends Model {
+    @Id() id : string;
+}
+
 export class Frog extends Model {
-    @Attribute() legs = HasMany(Post);
-    @Attribute() other = HasOne(User);
+    @Attribute() legs = HasMany(FrogLeg);
+    @Attribute() arms = HasOne(FrogArm);
 }
 
 async function main() {
-    let blogSchema = Blog.attributes;
-    let frogSchema = Frog.attributes;
-
     console.dir('hello');
 }
 
