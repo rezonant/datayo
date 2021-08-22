@@ -1,5 +1,16 @@
 import 'reflect-metadata';
 import 'source-map-support/register';
-import { suite } from 'razmin';
+import { suite, ConsoleReporter, JUnitXMLReporter } from 'razmin';
 
-suite().include(['./**/*.test.js']).run();
+suite()
+    .withOptions({
+        reporting: {
+            reporters: [
+                new ConsoleReporter(),
+                new JUnitXMLReporter()
+            ]
+        }
+    })
+    .include(['./**/*.test.js'])
+    .run()
+;
