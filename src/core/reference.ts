@@ -1,19 +1,32 @@
-import { AttributeDefinition } from "./attributes";
+import { AttributeDefinition } from "./attribute";
+import { Model } from "./model";
 import { ReferenceContext } from "./reference-context";
 
-export class Reference<T> implements PromiseLike<T> {
-    constructor(private fetcher : (reference : Reference<T>) => Promise<T>) {
-
+export class Reference<T, PrimaryKey = any> implements PromiseLike<T> {
+    constructor(
+        readonly type : typeof Model, 
+        readonly id : (reference : Reference<T, PrimaryKey>) => PrimaryKey,
+        value? : T
+    ) {
+        this._result = value;
     }
 
-    static from<T>(instance : T): Reference<T> {
-        return new LiteralReference<T>(async () => instance);
+    get definition() {
+        return this.context?.definition;
     }
+    
+    static from<T extends Model>(instance : T): Reference<T> {
+        return new LiteralReference<T>(instance);
+    }
+
+    clone(): Reference<T> {
+        return new Reference<T>(this.type, this.id, null);
+    } 
 
     withContext(context : ReferenceContext) {
-        let ref = new Reference<T>(this.fetcher);
+        let ref = this.clone();
         ref._context = context;
-        return context;
+        return ref;
     }
 
     private _context : ReferenceContext;
@@ -24,6 +37,10 @@ export class Reference<T> implements PromiseLike<T> {
         return this._context;
     }
     
+    private async fetch(): Promise<T> {
+        return this.type.database().provider.resolveReference(this);
+    }
+
     async resolve() {
         if (this._result)
             return this._result;
@@ -31,7 +48,7 @@ export class Reference<T> implements PromiseLike<T> {
         if (this._ready)
             return await this._ready;
         
-        return this._result = await (this._ready = this.fetcher(this));
+        return this._result = await (this._ready = this.fetch());
     }
 
     async then<TResult1 = T, TResult2 = never>(onfulfilled?: (value: T) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2> {
@@ -39,12 +56,20 @@ export class Reference<T> implements PromiseLike<T> {
     }
 }
 
-export class LiteralReference<T> extends Reference<T> { }
+export class LiteralReference<T extends Model> extends Reference<T> { 
+    constructor(value : T) {
+        super(<typeof Model>value?.constructor, () => value?.primaryKey, value);
+    }
+}
 
 export class DefinedReference<T> extends Reference<T> {
     constructor(
-        readonly definition : AttributeDefinition
+        private _definition : AttributeDefinition
     ) {
-        super(null);
+        super(null, null, null);
+    }
+
+    get definition() {
+        return this._definition;
     }
 }

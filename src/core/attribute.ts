@@ -1,7 +1,6 @@
 import { Model } from "./model";
 import { registerAttribute } from "./private";
 
-
 export interface AttributeOptions {
     primaryKey? : boolean;
 }
@@ -24,7 +23,7 @@ export function Attribute(options : AttributeOptions = {}) {
 
         Object.defineProperty(target, propertyKey, {
             enumerable: true,
-            get: function() {
+            get: function(this : Model) {
                 return this.getAttribute(propertyKey);
             },
             set: function (this : Model, value) {
@@ -37,6 +36,7 @@ export function Attribute(options : AttributeOptions = {}) {
 export function Id() {
     return Attribute({ primaryKey: true });
 }
+
 /**
  * Defines an attribute on a model. Final attribute definition is sourced from a number of places.
  */
@@ -46,9 +46,14 @@ export function Id() {
     /**
      * The attribute that contains the primary ID reference to the related 
      * object. On BelongsTo(), this is on the local record. On HasOne/HasMany() it 
-     * is on the remove record
+     * is on the remove record.
+     * 
+     * Value is a record from (foreign) => (primary), so for "author = BelongsTo(Author)" on a Book it might be:
+     * { authorName: 'name', country: 'country' } to indicate that the book links to the Author when the Book's "authorName" 
+     * attribute matches the Author record's "name", and the local "country" matches the Author record's "country"
+     * 
      */
-    idAttribute? : string;
+    idAttribute? : Record<string,string>;
     designType? : Function;
     primaryKey? : boolean;
     relation? : 'has-one' | 'has-many' | 'belongs-to' | 'scope';

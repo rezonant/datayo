@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import { Attribute, Id } from "./core/attributes";
+import { Attribute, Id } from "./core/attribute";
 import { Model } from "./core/model";
-import { HasMany, HasOne } from "./core/relations";
+import { BelongsTo, HasMany, HasOne, Relation } from "./core/relations";
 
 export class Post extends Model {
     @Id() id : string;
@@ -9,11 +9,14 @@ export class Post extends Model {
 
 export class User extends Model {
     @Id() id : string;
+    @Relation() blog = HasOne(Blog);
 }
 
 export class Blog extends Model {
-    @Attribute() posts = HasMany(Post);
-    @Attribute() author = HasOne(User);
+    @Relation() posts = HasMany(Post);
+    @Relation() author = BelongsTo(User);
+    @Attribute() hits : number;
+    @Attribute() name : string;
 
     static foo() {
         return 123;
@@ -34,6 +37,11 @@ export class Frog extends Model {
 }
 
 async function main() {
+    let blog : Blog;
+
+    Blog.where({ name: { includes: 'foo' }})
+
+    //Blog.all().join(Frog, { on: {  } });
     console.dir('hello');
 }
 

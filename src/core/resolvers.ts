@@ -4,7 +4,7 @@ import { Reference } from "./reference";
 
 export async function resolveCollection<T>(collection : Collection<T>) {
     let model = collection.context.instance.$schema;
-    let db = Config.instance.databases.find(x => x.default);
+    let db = model.database();
 
     if (model.options.database)
         db = Config.instance.databases.find(x => x.id === model.options.database);
@@ -17,7 +17,7 @@ export async function resolveCollection<T>(collection : Collection<T>) {
 
 export async function resolveReference<T>(reference : Reference<T>) {
     let model = reference.context.instance.$schema;
-    let db = Config.instance.databases.find(x => x.default);
+    let db = model.database();
 
     if (model.options.database)
         db = Config.instance.databases.find(x => x.id === model.options.database);

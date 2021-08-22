@@ -1,4 +1,4 @@
-import { AttributeDefinition } from "./attributes";
+import { AttributeDefinition } from "./attribute";
 import { Model } from "./model";
 import { registerAttribute } from "./private";
 import { Constructor } from "../utils";
@@ -12,6 +12,8 @@ import { DefinedReference, Reference } from "./reference";
  * @returns 
  */
  export function HasMany<T>(type : Constructor<T>, options? : HasManyOptions): Collection<T> {
+    options.idAttribute = normalizeIdAttribute(options.idAttribute);
+
     return new DefinedCollection<T>({
         relation: 'has-many',
         designType: type
@@ -23,7 +25,7 @@ export interface HasOneOptions {
      * The ID attribute on the other model that should be used
      * for relating this record to the other
      */
-    idAttribute : string;
+    idAttribute? : string | string[] | Record<string,string>;
 }
 
 export interface HasManyOptions {
@@ -31,19 +33,19 @@ export interface HasManyOptions {
      * The ID attribute on the other model that should be used
      * for relating this record to the others
      */
-    idAttribute : string;
+    idAttribute? : string | string[] | Record<string,string>;
 
     /**
      * Specify a different HasMany relation on this model that this relation is found through.
      */
-    through : string;
+    through? : string;
 
     /**
      * Specifies the relation on the objects of the "through" relation that 
      * should be used for this relation. If not specified, its assumed to be 
      * the same as the name of this relation.
      */
-    throughRelation : string;
+    throughRelation? : string;
 }
 
 export interface BelongsToOptions {
@@ -51,7 +53,7 @@ export interface BelongsToOptions {
      * The ID attribute on this model that should be used for 
      * relating this record to the other
      */
-    idAttribute : string;
+    idAttribute? : string | string[] | Record<string,string>;
 }
 
 /**
@@ -61,21 +63,38 @@ export interface BelongsToOptions {
  * @returns 
  */
 export function HasOne<T>(type : Constructor<T>, options? : HasOneOptions): Reference<T> {
+    options.idAttribute = normalizeIdAttribute(options.idAttribute);
+    
     return new DefinedReference<T>({
         relation: 'has-one',
         designType: type
     });
 }
 
+function normalizeIdAttribute(idAttribute : string | string[] | Record<string,string>) {
+    if (!idAttribute)
+        return undefined;
+    
+    if (typeof idAttribute === 'string') {
+        idAttribute = { [idAttribute]: idAttribute };
+    } else if (Array.isArray(idAttribute)) {
+        idAttribute = idAttribute.reduce((pv, [k, v]) => (pv[k] = v, pv), {});
+    }
+
+    return idAttribute;
+}
 /**
  * The declaring model has a local reference to the model specified in the Belongs To
  * @param type 
  * @returns 
  */
-export function BelongsTo<T>(type : Constructor<T>): Reference<T> {
+export function BelongsTo<T>(type : Constructor<T>, options? : BelongsToOptions): Reference<T> {
+    options.idAttribute = normalizeIdAttribute(options.idAttribute);
+
     return new DefinedReference<T>({
         relation: 'belongs-to',
-        designType: type
+        designType: type,
+        idAttribute: options.idAttribute
     });
 }
 

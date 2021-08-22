@@ -1,5 +1,6 @@
-export * from './attributes';
+export * from './attribute';
 export * from './collection';
+export * from './criteria';
 export * from './model-options';
 export * from './model';
 export * from './reference-context';
