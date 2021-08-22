@@ -6,7 +6,7 @@ orbs:
   # See the orb's test job here: https://circleci.com/developer/orbs/orb/circleci/node#jobs-test
 
 workflows:
-  sample:
+  tests:
     jobs:
       - node/test:
           matrix:
