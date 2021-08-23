@@ -12,7 +12,7 @@ jobs:
         type: executor
       node-version:
         type: string
-    executor: << parameters.os >>
+    executor: linux
     steps:
       - checkout
       - node/install:
