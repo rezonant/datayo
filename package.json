@@ -13,13 +13,15 @@
   "version": "0.0.1",
   "description": "an ActiveRecord-inspired ORM for Typescript",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": {
     "url": "https://github.com/rezonant/datayo"
   },
   "scripts": {
     "build": "tsc -b",
     "example": "npm run build && node dist/example",
-    "test": "npm run build && node dist/test.js"
+    "test": "npm run build && node dist/test.js",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "database",
