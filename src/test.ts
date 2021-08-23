@@ -7,7 +7,7 @@ suite()
         reporting: {
             reporters: [
                 new ConsoleReporter(),
-                new JUnitXMLReporter()
+                new JUnitXMLReporter('test-results/razmin')
             ]
         }
     })
