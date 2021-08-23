@@ -15,7 +15,7 @@ jobs:
       tag: << parameters.version >>
     steps:
       - checkout
-      - node/install-npm
+      - run: npm i npm -g
       - node/install-packages
       - run: npm test
       - store_test_results:
