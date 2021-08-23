@@ -27,7 +27,7 @@ workflows:
       - test:
           matrix:
             parameters:
-              version: ['10', '12', '14']
+              version: ['10.24', '12.22', '14.17']
           # For more information about matrix testing see the detailed blog post:
           # https://circleci.com/blog/circleci-matrix-jobs/
           # or the configuration reference:
