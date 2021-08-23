@@ -25,7 +25,7 @@ jobs:
 workflows:
   tests:
     jobs:
-      - node/test:
+      - test:
           matrix:
             parameters:
               version: ['15.1', 'lts', '12.21']
