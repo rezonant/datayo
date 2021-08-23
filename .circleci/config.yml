@@ -11,7 +11,7 @@ jobs:
       version:
         type: string
     executor:
-      name: default
+      name: node/default
       tag: << parameters.version >>
     steps:
       - checkout
