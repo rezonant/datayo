@@ -43,5 +43,15 @@ suite(describe => {
             expect(Test.attributes.primary.primaryKey).to.be.true;
             expect(Test.attributes.notPrimary.primaryKey).to.be.false;
         });
+
+        it('should allow clarifying designType', () => {
+            class Test extends Model {
+                @Attribute({ designType: Number }) propertyA : number | string;
+                @Attribute({ designType: String }) propertyB;
+            }
+
+            expect(Test.attributes.propertyA.designType).to.equal(Number);
+            expect(Test.attributes.propertyB.designType).to.equal(String);
+        });
     });
 });

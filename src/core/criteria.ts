@@ -9,7 +9,7 @@ export interface NumberOperator {
 export interface StringOperator {
     includes?: string;
     matches?: string | RegExp;
-    beginsWith?: string;
+    startsWith?: string;
     endsWith?: string;
     not?: string;
 }
@@ -21,14 +21,15 @@ export interface DateOperator {
     between?: [Date, Date];
 }
 
+export type AttributeCriteria<T> = T extends Number ?
+    (T | NumberOperator)
+    : T extends String ?
+    (T | StringOperator)
+    : T extends Date ?
+    (T | DateOperator)
+    : T
+;
+
 export type Criteria<T> = {
-    [P in keyof T]?: (
-        T[P] extends Number ?
-            (T[P] | NumberOperator)
-        : T[P] extends String ?
-            (T[P] | StringOperator)
-        : T[P] extends Date ?
-            (T[P] | DateOperator)
-        : T[P]
-    );
+    [P in keyof T]?: AttributeCriteria<T[P]>;
 }

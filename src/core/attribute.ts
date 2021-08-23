@@ -3,6 +3,7 @@ import { registerAttribute } from "./private";
 
 export interface AttributeOptions {
     primaryKey? : boolean;
+    designType? : Function;
 }
 
 export function Attribute(options : AttributeOptions = {}) {
@@ -16,7 +17,10 @@ export function Attribute(options : AttributeOptions = {}) {
             ...options
         };
 
-        if (designType === Object)
+        if (options.designType)
+            designType = options.designType;
+        
+        if (designType === Object || !designType)
             throw new Error(`class ${target.constructor.name}: Cannot determine type of @Attribute() ${propertyKey}`);
 
         $schema[registerAttribute](propertyKey, definition);

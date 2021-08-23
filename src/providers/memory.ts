@@ -1,5 +1,5 @@
 import { DatabaseProvider } from "../config";
-import { Collection, Criteria, Model, Reference } from "../core";
+import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator } from "../core";
 
 export class MemoryDatabaseProvider implements DatabaseProvider {
     private objects = new Map<Function, Map<string, Object>>();
@@ -11,8 +11,107 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
         return this.objects.get(modelClass);
     }
 
-    async objectMatchesCriteria<T>(object : T, criteria : Criteria<T>) {
-        return Object.keys(criteria).some(key => object[key] !== criteria[key]);
+    valueMatchesCriteria<T>(value : T, designType : Function, criteria : AttributeCriteria<T>): boolean {
+        let typeOfCriteria = typeof criteria;
+        let typeOfValue = typeof value;
+
+        if (typeOfCriteria === 'undefined')
+            return true;
+
+        if (designType === Number) {
+            if (typeOfCriteria === 'number')
+                return value === criteria;
+            
+            if (typeOfValue !== 'number')
+                return false;
+            
+            let v = <Number><unknown>value;
+            let c = <NumberOperator>criteria;
+            let passes = true;
+
+            // order cheapest to most expensive
+
+            if (passes && 'greaterThan' in c)
+                passes = v > c.greaterThan;
+            if (passes && 'lessThan' in c)
+                passes = v < c.lessThan;
+            if (passes && 'not' in c)
+                passes = v !== c.not;
+            if (passes && 'between' in c)
+                passes = v >= c.between[0] && v <= c.between[1];
+
+            return passes;
+        } else if (designType === String) {
+            if (typeOfCriteria === 'string')
+                return value === criteria;
+            if (typeOfValue !== 'string')
+                return false;
+            
+            let v = <string><unknown>value;
+            let c = <StringOperator>criteria;
+
+            let passes = true;
+
+            // order cheapest to most expensive
+
+            if (passes && 'not' in c)
+                passes = v !== c.not;
+            if (passes && 'startsWith' in c)
+                passes = v.startsWith(c.startsWith);
+            if (passes && 'endsWith' in c)
+                passes = v.endsWith(c.endsWith);
+            if (passes && 'includes' in c)
+                passes = v.includes(c.includes);
+            if (passes && 'matches' in c) {
+                if (c.matches instanceof RegExp) {
+                    passes = c.matches.test(String(v));
+                } else {
+                    throw new Error(`Only regular expressions are supported for in-memory persistence layer`);
+                }
+            }
+
+            return passes;
+        } else if (designType === Date) {
+            let v : Date;
+
+            if (typeOfValue === 'number')
+                v = new Date(Number(value));
+            else if (typeOfValue === 'string')
+                v = new Date(String(value));
+            else if (value instanceof Date)
+                v = value;
+            else if (value === null || value === undefined)
+                v = <null>value;
+            else
+                return false;
+            
+            if (v === criteria) // handles null/undefined
+                return true;
+            
+            if (criteria instanceof Date)
+                return v.getTime() === criteria.getTime();
+            
+            let vt = v.getTime();
+            let c : DateOperator = <DateOperator>criteria;
+            let passes = true;
+
+            if (passes && 'not' in c)
+                passes = vt !== c.not.getTime();
+            if (passes && 'greaterThan' in c)
+                passes = vt > c.greaterThan.getTime();
+            if (passes && 'lessThan' in c)
+                passes = vt < c.lessThan.getTime();
+            if (passes && 'between' in c)
+                passes = vt >= c.between[0].getTime() && vt <= c.between[1].getTime();
+            
+            return passes;
+        } else {
+            return value === criteria;
+        }
+    }
+
+    objectMatchesCriteria<T>(object : T, $schema : typeof Model, criteria : Criteria<T>) {
+        return Object.keys(criteria).every(key => this.valueMatchesCriteria(object[key], $schema.attributes[key]?.designType, criteria[key]));
     }
 
     async resolveCollection<T>(collection: Collection<T>): Promise<T[]> {
@@ -22,7 +121,7 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
 
         // Criteria
         if (params?.criteria)
-            results = results.filter(x => this.objectMatchesCriteria(x, params.criteria))
+            results = results.filter(x => this.objectMatchesCriteria(x, collection.type, params.criteria))
 
         if (params?.offset)
             results = results.slice(params?.offset || 0, params?.limit);
