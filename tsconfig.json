@@ -15,9 +15,6 @@
             "DOM",
             "es2016",
             "es2018.asynciterable"
-        ],
-        "types": [
-            "reflect-metadata"
         ]
     },
     "include": [
