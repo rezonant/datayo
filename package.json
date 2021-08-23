@@ -1,9 +1,11 @@
 {
   "devDependencies": {
     "@types/chai": "^4.2.21",
+    "@types/node": "^16.7.1",
     "@types/uuid": "^8.3.1",
     "chai": "^4.3.4",
     "razmin": "^1.1.2",
+    "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.19",
     "typescript": "^4.3.5"
   },
@@ -11,40 +13,6 @@
   "version": "0.0.1",
   "description": "ORM for Typescript",
   "main": "dist/index.js",
-  "dependencies": {
-    "array-union": "^1.0.2",
-    "array-uniq": "^1.0.3",
-    "balanced-match": "^1.0.2",
-    "brace-expansion": "^1.1.11",
-    "callsites": "^2.0.0",
-    "colors": "^1.4.0",
-    "concat-map": "^0.0.1",
-    "fs.realpath": "^1.0.0",
-    "glob": "^7.1.7",
-    "glob-parent": "^3.1.0",
-    "globby": "^6.1.0",
-    "inflight": "^1.0.6",
-    "inherits": "^2.0.4",
-    "is-extglob": "^2.1.1",
-    "is-glob": "^3.1.0",
-    "mersenne-twister": "^1.1.0",
-    "minimatch": "^3.0.4",
-    "object-assign": "^4.1.1",
-    "once": "^1.4.0",
-    "parent-module": "^0.1.0",
-    "path-dirname": "^1.0.2",
-    "path-is-absolute": "^1.0.1",
-    "pify": "^2.3.0",
-    "pinkie": "^2.0.4",
-    "pinkie-promise": "^2.0.1",
-    "reflect-metadata": "^0.1.13",
-    "require-glob": "^3.2.0",
-    "rxjs": "^6.6.7",
-    "tslib": "^1.14.1",
-    "uuid": "^8.3.2",
-    "wrappy": "^1.0.2",
-    "zone.js": "^0.11.4"
-  },
   "scripts": {
     "build": "tsc -b",
     "example": "npm run build && node dist/example",
@@ -55,5 +23,8 @@
     "orm"
   ],
   "author": "William Lahti",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "uuid": "^8.3.2"
+  }
 }
