@@ -11,8 +11,11 @@
   },
   "name": "datayo",
   "version": "0.0.1",
-  "description": "ORM for Typescript",
+  "description": "an ActiveRecord-inspired ORM for Typescript",
   "main": "dist/index.js",
+  "repository": {
+    "url": "https://github.com/rezonant/datayo"
+  },
   "scripts": {
     "build": "tsc -b",
     "example": "npm run build && node dist/example",
