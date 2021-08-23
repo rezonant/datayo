@@ -10,12 +10,11 @@ jobs:
     parameters:
       version:
         type: string
-    docker:
-      - image: circleci/node:7.10
+    executor:
+      name: default
+      tag: << parameters.version >>
     steps:
       - checkout
-      - node/install:
-          node-version: << parameters.version >>
       - node/install-packages
       - run: npm test
       - store_test_results:
