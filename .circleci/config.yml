@@ -8,19 +8,18 @@ orbs:
 jobs:
   test:
     parameters:
-      os:
-        type: executor
-      node-version:
+      version:
         type: string
-    executor: linux
+    docker:
+      - image: circleci/node:7.10
     steps:
       - checkout
       - node/install:
-          node-version: << parameters.node-version >>
+          node-version: << parameters.version >>
       - node/install-packages
       - run: npm test
       - store_test_results:
-        path: test-results
+          path: test-results
 
 workflows:
   tests:
