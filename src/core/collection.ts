@@ -1,43 +1,35 @@
 import { Constructor } from "../utils";
 import { AttributeDefinition } from "./attribute";
 import { Criteria } from "./criteria";
+import { JoinedCollection } from "./join";
 import { Model, ModelConstructor } from "./model";
 import { ReferenceContext } from "./reference-context";
 
-export interface CollectionParams<T> {
-    criteria? : Criteria<T>;
+export interface CollectionParams<T, CriteriaT = Criteria<T>> {
+    criteria? : CriteriaT;
     offset? : number;
     limit? : number;
     context? : ReferenceContext;
 }
-
-export type JoinableKeys<Joined> = {
-    [P in keyof Joined] : (
-        Joined[P] extends Function ? never 
-        : P
-    )
-;
-}[keyof Joined];
-
-export type JoinCriteria<Joined, Joiner> = {
-    [P in JoinableKeys<Joined>] : keyof Joiner;
-}
-export interface JoinOptions<Joined, Joiner> {
-    on?: JoinCriteria<Joined, Joiner>;
-}
-
-export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
+export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>, PromiseLike<T[]> {
     constructor(
         readonly type : typeof Model,
-        params : CollectionParams<T> = {},
+        params : CollectionParams<T, CriteriaT> = {},
         values? : T[]
     ) {
         this._params = Object.assign({}, params)
         this._results = values;
     }
 
-    then<TResult1 = T[], TResult2 = never>(onfulfilled?: (value: T[]) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2> {
-        return this.toPromise().then(onfulfilled, onrejected);
+    async then<TResult1 = T[], TResult2 = never>(onfulfilled?: (value: T[]) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2> {
+        try {
+            await this.resolve();
+        } catch (e) {
+            onrejected(e);
+            return;
+        }
+        
+        Promise.resolve(this._results).then(onfulfilled);
     }
 
     get definition() {
@@ -48,7 +40,7 @@ export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
         return (await this.limit(1))[0];
     }
 
-    private _params : CollectionParams<T>;
+    private _params : CollectionParams<T, CriteriaT>;
     private _results : T[];
     private _resultsReady : Promise<T[]>;
 
@@ -59,28 +51,46 @@ export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
     async reload() {
         this._results = null;
         this._resultsReady = null;
-        return await this.toPromise();
+        return await this.resolve();
     }
     
     private async fetch() {
         return this.type.database().provider.resolveCollection(this);
     }
 
-    async toPromise() {
+    get resolved() {
+        return this._results !== undefined;
+    }
+    
+    /**
+     * Get the current result of this collection. If the collection is not yet resolved,
+     * this will return `undefined`. Use `resolved` to check if the collection is resolved.
+     */
+    get results() {
+        return this._results;
+    }
+    
+    
+    /**
+     * Resolve this collection so it knows what its results are.
+     * @returns 
+     */
+    async resolve() {
         if (this._results)
             return this._results;
         
         if (this._resultsReady)
             return await this._resultsReady
         
-        return this._results = await (this._resultsReady = Promise.resolve(this.fetch()));
+        this._results = await (this._resultsReady = Promise.resolve(this.fetch()));
+        return this;
     }
 
     get criteria() {
         return Object.assign({}, this._params.criteria);
     }
 
-    get params(): CollectionParams<T> {
+    get params(): CollectionParams<T, CriteriaT> {
         return Object.assign({}, this._params, { criteria: this.criteria });
     }
 
@@ -89,10 +99,10 @@ export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
     }
 
     clone() {
-        return new Collection<T>(this.type, this.params, this._results);
+        return new Collection<T, CriteriaT>(this.type, this.params, this._results);
     }
 
-    where(criteria : Criteria<T>) {
+    where(criteria : CriteriaT): Collection<T, CriteriaT> {
         let clone = this.clone();
         Object.assign(clone._params.criteria, criteria);
         return clone;
@@ -110,8 +120,8 @@ export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
         return clone;
     }
 
-    join<Joiner>(type : ModelConstructor<Joiner>, options? : JoinOptions<Joiner, T>) {
-        
+    join<Key extends (string | symbol | number)>(name : Key): JoinedCollection<{ [ P in Key ]: T }> {
+        return null;
     }
 
     withContext(context : ReferenceContext) {
@@ -126,7 +136,7 @@ export class Collection<T> implements AsyncIterable<T>, PromiseLike<T[]> {
 
         return {
             next: async () => (
-                results ||= await this.toPromise(), 
+                results ||= await this, 
                 {
                     done: index >= results.length,
                     value: results[index]

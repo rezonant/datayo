@@ -1,3 +1,4 @@
+import { FieldKeys } from "../utils/field-keys";
 
 export interface NumberOperator {
     greaterThan?: Number;
@@ -31,5 +32,5 @@ export type AttributeCriteria<T> = T extends Number ?
 ;
 
 export type Criteria<T> = {
-    [P in keyof T]?: AttributeCriteria<T[P]>;
+    [P in FieldKeys<T>]?: AttributeCriteria<T[P]>;
 }

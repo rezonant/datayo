@@ -14,6 +14,18 @@ export class Reference<T, PrimaryKey = any> implements PromiseLike<T> {
     get definition() {
         return this.context?.definition;
     }
+
+    get resolved() {
+        return this._result !== undefined;
+    }
+
+    /**
+     * Get the current result of this reference. If the reference is not yet resolved,
+     * this will return `undefined`. Use `resolved` to check if the reference is resolved.
+     */
+    get result() {
+        return this._result;
+    }
     
     static from<T extends Model>(instance : T): Reference<T> {
         return new LiteralReference<T>(instance);
@@ -41,6 +53,10 @@ export class Reference<T, PrimaryKey = any> implements PromiseLike<T> {
         return this.type.database().provider.resolveReference(this);
     }
 
+    /**
+     * Resolve this reference so that it knows what object it is pointing to.
+     * @returns this
+     */
     async resolve() {
         if (this._result)
             return this._result;
@@ -48,11 +64,19 @@ export class Reference<T, PrimaryKey = any> implements PromiseLike<T> {
         if (this._ready)
             return await this._ready;
         
-        return this._result = await (this._ready = this.fetch());
+        this._result = await (this._ready = this.fetch());
+        return this;
     }
 
     async then<TResult1 = T, TResult2 = never>(onfulfilled?: (value: T) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2> {
-        return this.resolve().then(onfulfilled, onrejected);
+        try {
+            await this.resolve();
+        } catch (e) {
+            onrejected(e);
+            return;
+        }
+
+        return Promise.resolve(this._result).then(onfulfilled);
     }
 }
 

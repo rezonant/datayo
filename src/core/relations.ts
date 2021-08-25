@@ -116,11 +116,52 @@ export function Relation() {
             set: function (this : Model, value) {
                 if (value instanceof DefinedCollection) {
                     Object.assign(definition, value.definition);
+                    this.setAttribute(propertyKey, value);
                 } else if (value instanceof DefinedReference) {
                     Object.assign(definition, value.definition);
-                }
+                    this.setAttribute(propertyKey, value);
+                } else {
+                    // This is a real assignment at runtime.
+                    if (definition.relation === 'belongs-to') {
+                        let reference = <Reference<Model>>value;
 
-                this.setAttribute(propertyKey, value);
+                        if (!reference.resolved)
+                            throw new Error(`Reference must be resolved before assignment. Assign "await reference.resolve()" instead`);
+                        
+                        let instance : Model = reference.result;
+
+                        // The local idAttribute must be updated
+                        for (let key of Object.keys(definition.idAttribute)) {
+                            this.setAttribute(key, instance.getAttribute(definition.idAttribute[key]));
+                        }
+                    } else if (definition.relation === 'has-one') {
+                        let reference = <Reference<Model>>value;
+
+                        if (!reference.resolved)
+                            throw new Error(`Reference must be resolved before assignment. Assign "await reference.resolve()" instead`);
+                        
+                        let instance : Model = reference.result;
+
+                        // The remote idAttribute must be updated
+                        for (let key of Object.keys(definition.idAttribute)) {
+                            instance.setAttribute(key, this.getAttribute(definition.idAttribute[key]));
+                        }
+                    } else if (definition.relation === 'has-many') {
+                        let collection = <Collection<Model>>value;
+                        
+                        if (!collection.resolved) 
+                            throw new Error(`Collection must be resolved before assignment. Assign "await collection.resolve()" instead`);
+
+                        // The remote idAttribute must be updated
+                        for (let instance of collection.results) {
+                            for (let key of Object.keys(definition.idAttribute)) {
+                                instance.setAttribute(key, this.getAttribute(definition.idAttribute[key]));
+                            }
+                        }
+                    }
+
+                    this.setAttribute(propertyKey, value);
+                }
             }
         });
     };

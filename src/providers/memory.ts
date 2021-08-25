@@ -120,6 +120,21 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
         let params = collection.params;
 
         // Criteria
+
+        let defn = collection.context?.definition;
+
+        if (defn?.relation === 'has-many') {
+            // This is a relation on the context model
+            // The other model has the foreign reference
+
+            let criteria : Criteria<any> = {};
+            for (let key of Object.keys(defn.idAttribute)) {
+                criteria[key] = collection.context.instance.getAttribute(defn.idAttribute[key]);
+            }
+
+            results = results.filter(x => this.objectMatchesCriteria(x, collection.type, criteria))
+        }
+
         if (params?.criteria)
             results = results.filter(x => this.objectMatchesCriteria(x, collection.type, params.criteria))
 
@@ -143,7 +158,7 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
             let result = await new Collection<T>(reference.type, { criteria }).first();
 
             return result;
-        } else {
+        } else if (reference.definition.relation === 'belongs-to') {
             // foreign reference is on local object
             let idAttribute = reference.definition.idAttribute;
             let criteria : Criteria<T> = {};
@@ -154,6 +169,8 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
             let result = await new Collection<T>(reference.type, { criteria }).first();
 
             return result;
+        } else {
+            throw new Error(`This should not be reached`);
         }
     }
 

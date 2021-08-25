@@ -112,7 +112,7 @@ export class Model {
         return await this.all().first();
     }
 
-    static where<T>(this : ModelConstructor<T>, criteria : Criteria<T>): Collection<T> {
+    static where<T>(this : ModelConstructor<T>, criteria : Criteria<T>) {
         return this.all().where(criteria);
     }
 
@@ -136,20 +136,31 @@ export class Model {
     }
 
     isChanged() {
-        return this.#changed;
+        if (this.#changed)
+            return true;
+    }
+
+    getChangedRelatedObjects() {
+        for (let attr of this.$schema.relationDefinitions) {
+            if (attr.relation === 'has-one' || attr.relation === 'has-many') {
+                let ref : Reference<Model> = this.getAttribute(attr.name);
+                
+            }
+        }
     }
 
     ref() {
         return Reference.from(this);
     }
 
-    collect(values : this[]) {
+    collect<T>(this : T, values : T[]) {
         return Collection.from(values);
     }
 
     setAttribute(key : string, value : any) {
         //console.log(`Setting [${this.constructor.name}/${this.$instanceId}].${key} = ${value}`);
         if (value instanceof DefinedCollection) {
+            let criteria : Criteria<any>;
             value = new Collection<any>(<typeof Model>value.definition.designType);
         } else if (value instanceof DefinedReference) {
             value = new Reference<any>(<typeof Model>value.definition.designType, null, value.definition);
@@ -204,6 +215,10 @@ export class Model {
 
     static get attributeDefinitions() {
         return Array.from(this._attributeDefinitions.values());
+    }
+
+    static get relationDefinitions() {
+        return this.attributeDefinitions.filter(x => x.relation);
     }
 
     static hook<T>(this : ModelConstructor<T>, handler: (instance : T) => void) {
