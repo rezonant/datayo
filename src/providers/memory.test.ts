@@ -48,6 +48,83 @@ suite(describe => {
                 Config.instance.databases = undefined;
             }
         });
+        it('stores a copy of the persisted object, not the original', async () => {
+
+            class OpenMemoryDatabaseProvider extends MemoryDatabaseProvider {
+                get $objects() {
+                    return this.objects;
+                }
+            }
+
+            let provider = new OpenMemoryDatabaseProvider();
+
+            Config.instance.databases = [
+                new Database('default', true, provider)
+            ];
+
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+            await book.save();
+
+            expect(provider.$objects.get(Book).get(book.$instanceId)).not.to.equal(book);
+        });
+        it('retrieves a copy of the stored persisted object, not the archetype', async () => {
+
+            class OpenMemoryDatabaseProvider extends MemoryDatabaseProvider {
+                get $objects() {
+                    return this.objects;
+                }
+            }
+
+            let provider = new OpenMemoryDatabaseProvider();
+
+            Config.instance.databases = [
+                new Database('default', true, provider)
+            ];
+
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+            provider.$objects.set(Book, new Map<string, Object>());
+            provider.$objects.get(Book).set(book.$instanceId, book);
+
+            let book2 = await Book.first();
+            expect(book2.$instanceId).to.equal(book.$instanceId);
+            expect(book2).not.to.equal(book);
+        });
+        it('updates the archetype object when saving changes to an object', async () => {
+            class OpenMemoryDatabaseProvider extends MemoryDatabaseProvider {
+                get $objects() {
+                    return this.objects;
+                }
+            }
+
+            let provider = new OpenMemoryDatabaseProvider();
+
+            Config.instance.databases = [
+                new Database('default', true, provider)
+            ];
+
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+            provider.$objects.set(Book, new Map<string, Object>());
+            provider.$objects.get(Book).set(book.$instanceId, book);
+
+            let book2 = await Book.first();
+            book2.name = 'bar';
+            await book2.save();
+
+            expect(provider.$objects.get(Book).get(book.$instanceId)).to.equal(book);
+            expect(book.name).to.equal('bar');
+        });
         describe('objectMatchesCriteria', it => {
             it('matches all objects when no criteria is provided', () => {
 

@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import { suite } from "razmin";
 import { Attribute, Model, Reference } from ".";
-import { Database, DatabaseProvider } from "../config";
+import { Database, DatabaseProvider, Config } from "../config";
 import { Collection } from "./collection";
 import { resolveReference } from "./resolvers";
+import { MemoryDatabaseProvider } from "../providers";
 
 suite(describe => {
     describe('Model', it => {
@@ -45,6 +46,100 @@ suite(describe => {
             expect(book.primaryCriteria().customerId).to.equal(321);
             expect(Object.keys(book.primaryCriteria()).length).to.equal(2);
         })
+        it('should be created in a changed state', async () => {
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            expect(Book.new().isChanged()).to.be.true;
+        });
+        it('should be fetched in an unchanged state', async () => {
+            Config.instance.databases = [
+                new Database('default', true, new MemoryDatabaseProvider())
+            ];
+            
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+
+            expect(book.isChanged()).to.be.true;
+            await book.save();
+            expect(book.isChanged()).to.be.false;
+
+            let book2 = await Book.findBy({ $instanceId: book.$instanceId });
+
+            expect(book2.isChanged()).to.be.false;
+        });
+        it('should result in a new fetched object for every distinct resolution', async () => {
+            Config.instance.databases = [
+                new Database('default', true, new MemoryDatabaseProvider())
+            ];
+            
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+
+            expect(book.isChanged()).to.be.true;
+            await book.save();
+            expect(book.isChanged()).to.be.false;
+
+            let book2 = await Book.findBy({ $instanceId: book.$instanceId });
+            let book3 = await Book.findBy({ $instanceId: book.$instanceId });
+
+            expect(book2).not.to.equal(book3);
+        });
+        it('should track changed state independent of shared identity', async () => {
+            Config.instance.databases = [
+                new Database('default', true, new MemoryDatabaseProvider())
+            ];
+            
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+
+            expect(book.isChanged()).to.be.true;
+            await book.save();
+            expect(book.isChanged()).to.be.false;
+
+            let book2 = await Book.findBy({ $instanceId: book.$instanceId });
+            let book3 = await Book.findBy({ $instanceId: book.$instanceId });
+
+            expect(book2.isChanged()).to.be.false;
+            expect(book3.isChanged()).to.be.false;
+
+            book2.name = 'bar';
+
+            expect(book2.isChanged()).to.be.true;
+            expect(book3.isChanged()).to.be.false;
+        });
+        it('should track whether the instance has changed', async () => {
+            Config.instance.databases = [
+                new Database('default', true, new MemoryDatabaseProvider())
+            ];
+            
+            class Book extends Model {
+                @Attribute() name : string;
+            }
+
+            let book = Book.new({ name: 'foo' });
+
+            expect(book.isChanged()).to.be.true;
+            await book.save();
+            expect(book.isChanged()).to.be.false;
+
+            book.name = 'bar';
+
+            expect(book.isChanged()).to.be.true;
+            await book.save();
+            expect(book.isChanged()).to.be.false;
+
+        });
         describe ('hooks', it => {
             it('should run onNewInstance before calling init', () => {
                 let log = '';

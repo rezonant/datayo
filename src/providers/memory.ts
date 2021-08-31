@@ -2,7 +2,7 @@ import { DatabaseProvider } from "../config";
 import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator } from "../core";
 
 export class MemoryDatabaseProvider implements DatabaseProvider {
-    private objects = new Map<Function, Map<string, Object>>();
+    protected objects = new Map<Function, Map<string, Object>>();
 
     private getStore(modelClass : Function) {
         if (!this.objects.has(modelClass)) {

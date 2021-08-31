@@ -108,6 +108,10 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
         return clone;
     }
 
+    findBy(criteria : CriteriaT): Promise<T> {
+        return this.where(criteria).first();
+    }
+
     offset(value : number) {
         let clone = this.clone();
         clone._params.offset = value;

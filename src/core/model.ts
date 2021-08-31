@@ -116,6 +116,10 @@ export class Model {
         return this.all().where(criteria);
     }
 
+    static findBy<T>(this : ModelConstructor<T>, criteria : Criteria<T>) {
+        return this.all().findBy(criteria);
+    }
+
     static all<T>(this : ModelConstructor<T>): Collection<T> {
         return new Collection<T>(this);
     }
@@ -136,8 +140,7 @@ export class Model {
     }
 
     isChanged() {
-        if (this.#changed)
-            return true;
+        return !this.#persisted || this.#changed;
     }
 
     getChangedRelatedObjects() {
