@@ -1,5 +1,5 @@
 import { DatabaseProvider } from "../config";
-import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator, mint } from "../core";
+import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator, mint, mintOne } from "../core";
 
 export class MemoryDatabaseProvider implements DatabaseProvider {
     protected objects = new Map<Function, Map<string, Object>>();
@@ -170,7 +170,7 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
 
             return result;
         } else {
-            throw new Error(`This should not be reached`);
+            throw new Error(`Unknown relation type '${reference.definition.relation}'`);
         }
     }
 
@@ -182,7 +182,7 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
         if (existingInstance) {
             Object.assign(existingInstance, instance.getChangesAsObject());
         } else {
-            store.set(instance.$instanceId, instance);
+            store.set(instance.$instanceId, mintOne(instance));
         }
     }
 }

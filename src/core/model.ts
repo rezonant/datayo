@@ -1,6 +1,6 @@
 import { Attribute, AttributeDefinition } from "./attribute";
 import { ModelOptions } from "./model-options";
-import { registerAttribute, registerModelOptions } from "./private";
+import { registerAttribute, registerModelOptions, markUnchanged, markPersisted } from "./private";
 import { DefinedReference, Reference } from "./reference";
 import { resolveCollection } from "./resolvers";
 import { Constructor } from "../utils";
@@ -47,8 +47,21 @@ export class Model {
             this.$instanceId = uuid();
 
         this.notifyNewInstance();
-
         this.init();
+        this.#initialized = true;
+    }
+
+    #initialized = false;
+
+    [markUnchanged]() {
+        this.#changed = false;
+        Array.from(this.#attributes.entries()).forEach(([k,v]) => v.changed = false);
+        return this;
+    }
+
+    [markPersisted]() {
+        this.#persisted = true;
+        return this;
     }
 
     private notifyNewInstance() {
@@ -148,8 +161,8 @@ export class Model {
         return !this.#persisted || this.#changed;
     }
 
-    getChangesAsMap(): Map<string, any> {
-        return new Map<string,any>(Array.from(this.#attributes.entries()).filter(([k, v]) => v.changed));
+    getChangesAsMap() {
+        return new Map(Array.from(this.#attributes.entries()).filter(([k, v]) => v.changed).map(([k,v]) => [k, v.value]));
     }
 
     getChangesAsObject() {
@@ -295,8 +308,10 @@ export class Model {
             this._lifecycle.beforePersisting.next(this);
         this._lifecycle.beforeSaving.next(this);
         await this.database().provider.persist(this);
-        this.#persisted = true;
 
+        this[markPersisted]();
+        this[markUnchanged]();
+        
         if (isPersisting)
             this._lifecycle.afterPersisting.next(this);
         this._lifecycle.afterSaving.next();
