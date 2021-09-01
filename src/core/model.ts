@@ -17,6 +17,11 @@ export interface ModelLifecycle {
     afterSaving;
 }
 
+export interface AttributeValue<T> {
+    value : T;
+    changed : boolean;
+}
+
 export type Observables<T, SubjectT> = {
     [ P in keyof T ] : Observable<SubjectT>;
 }
@@ -132,7 +137,7 @@ export class Model {
     }
 
     #changed : boolean = false;
-    #attributes = new Map<string,any>();
+    #attributes = new Map<string,AttributeValue<any>>();
     #persisted : boolean = false;
 
     isPersisted() {
@@ -141,6 +146,22 @@ export class Model {
 
     isChanged() {
         return !this.#persisted || this.#changed;
+    }
+
+    getChangesAsMap(): Map<string, any> {
+        return new Map<string,any>(Array.from(this.#attributes.entries()).filter(([k, v]) => v.changed));
+    }
+
+    getChangesAsObject() {
+        return Array.from(this.getChangesAsMap().entries()).reduce((obj, [k, v]) => (obj[k] = v, obj), <Record<string,any>>{});
+    }
+
+    getAttributesAsMap() {
+        return new Map(Array.from(this.#attributes.entries()).map(([k,v]) => [k,v.value]));
+    }
+    
+    getAttributesAsObject() {
+        return Array.from(this.getAttributesAsMap().entries()).reduce((obj, [k, v]) => (obj[k] = v, obj), <Record<string,any>>{});
     }
 
     getChangedRelatedObjects() {
@@ -156,7 +177,7 @@ export class Model {
         return Reference.from(this);
     }
 
-    collect<T>(this : T, values : T[]) {
+    collect<T extends Model>(this : T, values : T[]) {
         return Collection.from(values);
     }
 
@@ -185,13 +206,17 @@ export class Model {
             });
         }
 
-        let existed = this.#attributes.has(key);
-        let originalValue = this.#attributes.get(key);
+        let attribute = this.#attributes.get(key);
         
-        if (existed && value !== originalValue)
-            this.#changed = true;
-
-        this.#attributes.set(key, value);
+        if (attribute) {
+            if (value !== attribute.value) {
+                this.#changed = true;
+                attribute.changed = true;
+                attribute.value = value;
+            }
+        } else {
+            this.#attributes.set(key, { value, changed: value !== undefined });
+        }
     }
 
     hasAttributeValue(key : string) {
@@ -199,11 +224,15 @@ export class Model {
     }
 
     getAttribute(key : string) {
-        return this.#attributes.get(key);
+        return this.#attributes.get(key)?.value;
     }
 
     getAttributes(): Record<string,any> {
-        return Array.from(this.#attributes.entries()).reduce((pv, [key, value]) => (pv[key] = value, pv), {});
+        return Array.from(this.#attributes.entries()).reduce((pv, [key, attr]) => (pv[key] = attr.value, pv), {});
+    }
+
+    isAttributeChanged(attr : string) {
+        return this.#attributes.get(attr)?.changed || false;
     }
 
     clone() {

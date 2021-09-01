@@ -8,6 +8,78 @@ import { MemoryDatabaseProvider } from "../providers";
 
 suite(describe => {
     describe('Model', it => {
+        describe('.new()', it => {
+            it('assigns attributes when used', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                }
+
+                let book = Book.new({ name: 'foo', author: 'bar' });
+                expect(book.name).to.equal('foo');
+                expect(book.author).to.equal('bar');
+            });
+            it('assigns $instanceId properly', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                }
+
+                let book = Book.new({ $instanceId: 'foobar' });
+                expect(book.$instanceId).to.equal('foobar');
+            });
+            it('assigns regular fields as well', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                    baz : string;
+                }
+
+                let book = Book.new({ baz: 'blah' });
+                expect(book.baz).to.equal('blah');
+            });
+            it('marks attributes assigned as changed', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                }
+
+                let book = Book.new({ name: 'foo' });
+
+                expect(book.isAttributeChanged('name')).to.be.true;
+                expect(book.isAttributeChanged('author')).to.be.false;
+                expect(book.isChanged()).to.be.true;
+            })
+        });
+        describe('.getAttributesAsObject()', () => {
+            it('includes all attributes', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                }
+
+                let book = Book.new({ name: 'foo' });
+                let obj = book.getAttributesAsObject();
+
+                expect(obj.name).to.equal(book.name);
+                expect(obj.$instanceId).to.equal(book.$instanceId);
+            });
+            it('does not include fields that are not attributes', () => {
+                class Book extends Model {
+                    @Attribute() name : string;
+                    @Attribute() author : string;
+                    baz : string;
+                }
+
+                let book = Book.new({ name: 'foo', baz: 'other' });
+                let obj = book.getAttributesAsObject();
+
+                expect(book.baz).to.equal('other');
+                expect(obj.name).to.equal(book.name);
+                expect(obj.$instanceId).to.equal(book.$instanceId);
+                expect(obj.baz).not.to.exist;
+            });
+        })
         it('correctly handles attributes', () => {
             class Book extends Model {
                 @Attribute() name : string;
@@ -163,7 +235,7 @@ suite(describe => {
                             async resolveCollection<T>(collection : Collection<T>) : Promise<T[]> {
                                 return [];
                             },
-                            async resolveReference<T>(reference : Reference<T>) : Promise<T> {
+                            async resolveReference<T extends Model>(reference : Reference<T>) : Promise<T> {
                                 return null;
                             },
                             async persist<T extends Model>(instance : T): Promise<void> {

@@ -44,7 +44,7 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
     private _results : T[];
     private _resultsReady : Promise<T[]>;
 
-    static from<T>(instances : T[]): Collection<T> {
+    static from<T extends Model>(instances : T[]): Collection<T> {
         return new LiteralCollection<T>(null, {}, instances);
     }
 
@@ -140,7 +140,7 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
 
         return {
             next: async () => (
-                results ||= await this, 
+                results = results || await this, 
                 {
                     done: index >= results.length,
                     value: results[index]
@@ -150,9 +150,9 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
     }
 }
 
-export class LiteralCollection<T> extends Collection<T> {}
+export class LiteralCollection<T extends Model> extends Collection<T> {}
 
-export class DefinedCollection<T> extends Collection<T> {
+export class DefinedCollection<T extends Model> extends Collection<T> {
     constructor(
         private _definition : AttributeDefinition
     ) {

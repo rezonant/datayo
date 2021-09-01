@@ -11,7 +11,7 @@ import { DefinedReference, Reference } from "./reference";
  * @param type 
  * @returns 
  */
- export function HasMany<T>(type : Constructor<T>, options? : HasManyOptions): Collection<T> {
+ export function HasMany<T extends Model>(type : Constructor<T>, options? : HasManyOptions): Collection<T> {
     options.idAttribute = normalizeIdAttribute(options.idAttribute);
 
     return new DefinedCollection<T>({
@@ -62,7 +62,7 @@ export interface BelongsToOptions {
  * @param type 
  * @returns 
  */
-export function HasOne<T>(type : Constructor<T>, options? : HasOneOptions): Reference<T> {
+export function HasOne<T extends Model>(type : Constructor<T>, options? : HasOneOptions): Reference<T> {
     options.idAttribute = normalizeIdAttribute(options.idAttribute);
     
     return new DefinedReference<T>({
@@ -88,7 +88,7 @@ function normalizeIdAttribute(idAttribute : string | string[] | Record<string,st
  * @param type 
  * @returns 
  */
-export function BelongsTo<T>(type : Constructor<T>, options? : BelongsToOptions): Reference<T> {
+export function BelongsTo<T extends Model>(type : Constructor<T>, options? : BelongsToOptions): Reference<T> {
     options.idAttribute = normalizeIdAttribute(options.idAttribute);
 
     return new DefinedReference<T>({
@@ -130,9 +130,11 @@ export function Relation() {
                         
                         let instance : Model = reference.result;
 
-                        // The local idAttribute must be updated
-                        for (let key of Object.keys(definition.idAttribute)) {
-                            this.setAttribute(key, instance.getAttribute(definition.idAttribute[key]));
+                        if (instance) {
+                            // The local idAttribute must be updated
+                            for (let key of Object.keys(definition.idAttribute)) {
+                                this.setAttribute(key, instance.getAttribute(definition.idAttribute[key]));
+                            }
                         }
                     } else if (definition.relation === 'has-one') {
                         let reference = <Reference<Model>>value;

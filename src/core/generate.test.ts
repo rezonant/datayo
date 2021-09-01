@@ -17,7 +17,7 @@ suite(describe => {
                         async resolveCollection<T>(collection : Collection<T>) : Promise<T[]> {
                             return [];
                         },
-                        async resolveReference<T>(reference : Reference<T>) : Promise<T> {
+                        async resolveReference<T extends Model>(reference : Reference<T>) : Promise<T> {
                             return null;
                         },
                         async persist<T extends Model>(instance : T): Promise<void> {
@@ -57,7 +57,7 @@ suite(describe => {
                         async resolveCollection<T>(collection : Collection<T>) : Promise<T[]> {
                             return [];
                         },
-                        async resolveReference<T>(reference : Reference<T>) : Promise<T> {
+                        async resolveReference<T extends Model>(reference : Reference<T>) : Promise<T> {
                             return null;
                         },
                         async persist<T extends Model>(instance : T): Promise<void> {

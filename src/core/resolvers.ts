@@ -1,8 +1,9 @@
 import { Config } from "../config";
 import { Collection } from "./collection";
 import { Reference } from "./reference";
+import { Model } from ".";
 
-export async function resolveCollection<T>(collection : Collection<T>) {
+export async function resolveCollection<T extends Model>(collection : Collection<T>) {
     let model = collection.context.instance.$schema;
     let db = model.database();
 
@@ -15,7 +16,7 @@ export async function resolveCollection<T>(collection : Collection<T>) {
     return db.provider.resolveCollection<T>(collection);
 }
 
-export async function resolveReference<T>(reference : Reference<T>) {
+export async function resolveReference<T extends Model>(reference : Reference<T>) {
     let model = reference.context.instance.$schema;
     let db = model.database();
 

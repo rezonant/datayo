@@ -1,5 +1,5 @@
 import { DatabaseProvider } from "../config";
-import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator } from "../core";
+import { AttributeCriteria, Collection, Criteria, Model, Reference, NumberOperator, StringOperator, DateOperator, mint } from "../core";
 
 export class MemoryDatabaseProvider implements DatabaseProvider {
     protected objects = new Map<Function, Map<string, Object>>();
@@ -143,10 +143,10 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
         else if (params?.limit)
             results = results.slice(params?.offset);
         
-        return results;
+        return mint(results);
     }
 
-    async resolveReference<T>(reference: Reference<T>): Promise<T> {
+    async resolveReference<T extends Model>(reference: Reference<T>): Promise<T> {
         if (reference.definition.relation === 'has-one') {
             // foreign reference is on remote object
             let idAttribute = reference.definition.idAttribute;
@@ -177,8 +177,10 @@ export class MemoryDatabaseProvider implements DatabaseProvider {
     async persist<T extends Model>(instance: T) {
         //console.log(`Persisting ${instance.constructor.name} / ${instance.$instanceId}`);
         let store = this.getStore(instance.constructor);
-        if (instance.isPersisted()) {
-            store.set(instance.$instanceId, instance);
+        let existingInstance = store.get(instance.$instanceId);
+
+        if (existingInstance) {
+            Object.assign(existingInstance, instance.getChangesAsObject());
         } else {
             store.set(instance.$instanceId, instance);
         }

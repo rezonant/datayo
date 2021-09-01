@@ -2,7 +2,7 @@ import { AttributeDefinition } from "./attribute";
 import { Model } from "./model";
 import { ReferenceContext } from "./reference-context";
 
-export class Reference<T, PrimaryKey = any> implements PromiseLike<T> {
+export class Reference<T extends Model, PrimaryKey = any> implements PromiseLike<T> {
     constructor(
         readonly type : typeof Model, 
         readonly id : (reference : Reference<T, PrimaryKey>) => PrimaryKey,
@@ -86,7 +86,7 @@ export class LiteralReference<T extends Model> extends Reference<T> {
     }
 }
 
-export class DefinedReference<T> extends Reference<T> {
+export class DefinedReference<T extends Model> extends Reference<T> {
     constructor(
         private _definition : AttributeDefinition
     ) {
