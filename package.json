@@ -3,11 +3,15 @@
   "version": "0.0.0",
   "description": "_An ActiveRecord-inspired ORM for Typescript_",
   "main": "index.js",
-  "dependencies": {
-    "zone.js": "^0.11.4"
-  },
   "devDependencies": {
-    "lerna": "^3.22.1"
+    "@types/chai": "^4.2.21",
+    "chai": "^4.3.4",
+    "lerna": "^3.22.1",
+    "razmin": "^1.1.4",
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.19",
+    "typescript": "^4.4.2",
+    "zone.js": "^0.11.4"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
