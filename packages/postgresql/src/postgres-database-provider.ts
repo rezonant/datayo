@@ -156,13 +156,21 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         let params : any[] = [];
 
         if (instance.isPersisted()) {
+            if (type.primaryKey.length === 0) {
+                throw new Error(`Cannot update instance of model ${type.name}: no primary key is defined`);
+            }
+
             // TODO: updates
         } else {
-            query = `INSERT INTO ${tableName} (${attrs.map(x => `"${x}"`).join(', ')}) VALUES (${values.map((x,i) => `$${i+1}`)})`;
+            query = `INSERT INTO ${tableName} (${attrs.map(x => `"${x}"`).join(', ')}) VALUES (${values.map((x,i) => `$${i+1}`)}) RETURNING *`;
             params = values;
         }
 
-        await this.client.query(query, params);
+        let result = await this.client.query(query, params);
+
+        let row = result.rows[0];
+
+        instance.apply(row);
 
         // TODO: IDs
     }
