@@ -301,8 +301,33 @@ export class Model {
         return this.$schema.database();
     }
 
+    type() {
+        return <typeof Model>this.constructor;
+    }
+
     async save() {
         let isPersisting = !this.isPersisted();
+
+        for (let [key, attr] of this.#attributes.entries()) {
+            if (!attr.changed)
+                continue;
+
+            let defn = this.type().getAttribute(key);
+            
+            if (!defn.relation)
+                continue;
+
+            
+            if (attr.value instanceof Collection) {
+                if (attr.value.resolved) {
+
+                }
+            } else if (attr.value instanceof Reference) {
+                if (attr.value.resolved) {
+
+                }
+            }
+        }
 
         if (isPersisting)
             this._lifecycle.beforePersisting.next(this);

@@ -1,0 +1,36 @@
+{
+  "devDependencies": {
+    "@types/chai": "^4.2.21",
+    "@types/node": "^16.7.1",
+    "@types/uuid": "^8.3.1",
+    "chai": "^4.3.4",
+    "razmin": "^1.1.4",
+    "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.19",
+    "typescript": "^4.3.5"
+  },
+  "name": "datayo",
+  "version": "0.0.1",
+  "description": "an ActiveRecord-inspired ORM for Typescript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "url": "https://github.com/rezonant/datayo"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "example": "npm run build && node dist/example",
+    "test": "npm run build && node dist/test.js",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "database",
+    "orm"
+  ],
+  "author": "William Lahti",
+  "license": "MIT",
+  "dependencies": {
+    "rxjs": "^6.6.7",
+    "uuid": "^8.3.2"
+  }
+}

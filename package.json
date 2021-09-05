@@ -1,36 +1,23 @@
 {
-  "devDependencies": {
-    "@types/chai": "^4.2.21",
-    "@types/node": "^16.7.1",
-    "@types/uuid": "^8.3.1",
-    "chai": "^4.3.4",
-    "razmin": "^1.1.4",
-    "reflect-metadata": "^0.1.13",
-    "source-map-support": "^0.5.19",
-    "typescript": "^4.3.5"
+  "name": "@datayo/workspace",
+  "version": "0.0.0",
+  "description": "_An ActiveRecord-inspired ORM for Typescript_",
+  "main": "index.js",
+  "dependencies": {
+    "zone.js": "^0.11.4"
   },
-  "name": "datayo",
-  "version": "0.0.1",
-  "description": "an ActiveRecord-inspired ORM for Typescript",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "repository": {
-    "url": "https://github.com/rezonant/datayo"
-  },
+  "devDependencies": {},
   "scripts": {
-    "build": "tsc -b",
-    "example": "npm run build && node dist/example",
-    "test": "npm run build && node dist/test.js",
-    "prepublishOnly": "npm test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "database",
-    "orm"
-  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rezonant/datayo.git"
+  },
   "author": "William Lahti",
   "license": "MIT",
-  "dependencies": {
-    "rxjs": "^6.6.7",
-    "uuid": "^8.3.2"
-  }
+  "bugs": {
+    "url": "https://github.com/rezonant/datayo/issues"
+  },
+  "homepage": "https://github.com/rezonant/datayo#readme"
 }

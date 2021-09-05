@@ -1,9 +1,0 @@
-node_modules/
-dist/**/*.test.js
-.vscode/
-.circleci/
-test-results/
-.gitignore
-CODE_OF_CONDUCT.md
-README.md
-tsconfig.json
