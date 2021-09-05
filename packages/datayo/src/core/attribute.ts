@@ -31,6 +31,9 @@ export function Attribute(options : AttributeOptions = {}) {
                 return this.getAttribute(propertyKey);
             },
             set: function (this : Model, value) {
+                if ([Number, String, Boolean].includes(designType))
+                    value = designType(value);
+
                 this.setAttribute(propertyKey, value);
             }
         });
