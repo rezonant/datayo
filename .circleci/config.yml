@@ -16,9 +16,10 @@ jobs:
     steps:
       - checkout
       - node/install-npm
-      - node/install-packages
+      - node/install-packages:
           app-dir: packages/datayo
-      - run: npm test
+      - run: 
+          command: npm test
           working_directory: packages/datayo
       - store_test_results:
           path: packages/datayo/test-results
