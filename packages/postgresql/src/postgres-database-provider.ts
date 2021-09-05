@@ -65,8 +65,37 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         this.connecting = this.connecting || this.client.connect();
     }
 
+    private inferTableName(className : string) {
+        let singular = className[0].toLowerCase() + className.slice(1);
+
+        if (singular.endsWith('s'))
+            return `${singular}es`;
+        else
+            return `${singular}s`;
+    }
+
     async resolveCollection<T>(collection: Collection<T, Criteria<T>>): Promise<T[]> {
         await this.connect();
+        let tableName = collection.type.options?.tableName || this.inferTableName(collection.type.name);
+
+        let query = `SELECT * FROM ${tableName}`;
+        let where = [];
+        let params = [];
+            
+        for (let key of Object.keys(collection.criteria)) {
+            let oper = '=';
+
+            where.push(`"${key}" ${oper} ?`);
+            params.push(collection.criteria[key]);
+        }
+
+        if (where.length > 0) {
+            query = `${query} WHERE ${where.join(' AND ')}`;
+        }
+
+        let result = await this.client.query(query);
+
+        
         throw new Error("Method not implemented.");
     }
 

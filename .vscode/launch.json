@@ -20,14 +20,30 @@
         {
             "type": "pwa-node",
             "request": "launch",
-            "name": "Test",
+            "name": "Test (datayo)",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\dist\\test.js",
-            "preLaunchTask": "tsc: build - tsconfig.json",
+            "program": "${workspaceFolder}/packages/datayo/dist/test.js",
+            "preLaunchTask": "tsc: build - packages/datayo/tsconfig.json",
+            "cwd": "${workspaceFolder}/packages/datayo",
+            
             "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
+                "${workspaceFolder}/packages/datayo/dist/**/*.js"
+            ]
+        }, {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Test (postgresql)",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/packages/postgresql/dist/test.js",
+            "preLaunchTask": "tsc: build - packages/postgresql/tsconfig.json",
+            "cwd": "${workspaceFolder}/packages/postgresql",
+            
+            "outFiles": [
+                "${workspaceFolder}/packages/postgresql/dist/**/*.js"
             ]
         }
     ]
