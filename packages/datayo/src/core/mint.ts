@@ -15,5 +15,5 @@ export function mintOne<T>(obj : T): T {
 }
 
 export function mint<T>(obj : T[]): T[] {
-    return obj.map(x => this.mintOne(x));
+    return obj.map(x => mintOne(x));
 }
