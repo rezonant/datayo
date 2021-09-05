@@ -93,10 +93,24 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             query = `${query} WHERE ${where.join(' AND ')}`;
         }
 
-        let result = await this.client.query(query);
+        if (collection.params?.limit) {
+            query = `${query} LIMIT ${collection.params?.limit}`;
+        }
 
-        
-        throw new Error("Method not implemented.");
+        if (collection.params?.offset) {
+            query = `${query} OFFSET ${collection.params?.offset}`
+        }
+
+        if (collection.params?.order) {
+            let order = Object.keys(collection.params.order).map(k => `${k} ${collection.params.order[k]}`);
+            query = `${query} ORDER BY ${order.join(', ')}`;
+        }
+
+        //console.log(`QUERY: ${query}`);
+        let result = await this.client.query(query);
+        let models: Model[] = [];
+
+        return result.rows.map(row => <T><unknown>collection.type.new(row));
     }
 
     async resolveReference<T extends Model>(reference: Reference<T, any>): Promise<T> {

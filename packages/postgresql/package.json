@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "pg": "^8.7.1",
-    "rxjs": "^6.6.7"
+    "rxjs": "^6.6.7",
+    "datayo": "0.0.1"
   },
   "peerDependencies": {
-    "datayo": "0.0.1"
   }
 }

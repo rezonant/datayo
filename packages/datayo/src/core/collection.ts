@@ -1,14 +1,23 @@
-import { Constructor } from "../utils";
+import { Constructor, FieldKeys } from "../utils";
 import { AttributeDefinition } from "./attribute";
 import { Criteria } from "./criteria";
 import { JoinedCollection } from "./join";
 import { Model, ModelConstructor } from "./model";
 import { ReferenceContext } from "./reference-context";
 
+export type OrderDefinition<T> = {
+    [P in FieldKeys<T>]? : (
+        T extends Model ?
+            ('asc' | 'desc')
+            : OrderDefinition<T[P]>
+    );
+}
+
 export interface CollectionParams<T, CriteriaT = Criteria<T>> {
     criteria? : CriteriaT;
     offset? : number;
     limit? : number;
+    order? : OrderDefinition<T>;
     context? : ReferenceContext;
 }
 export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>, PromiseLike<T[]> {
@@ -115,6 +124,12 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
     offset(value : number) {
         let clone = this.clone();
         clone._params.offset = value;
+        return clone;
+    }
+
+    orderBy(fields : OrderDefinition<T>) {
+        let clone = this.clone();
+        clone._params.order = fields;
         return clone;
     }
 

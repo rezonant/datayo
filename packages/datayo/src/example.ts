@@ -47,6 +47,7 @@ async function main() {
     Blog.all()
         .join('blog2')
         .with(Post, 'post', { on: { blog: 'blog2' } })
+        .orderBy({ blog2: { author: 'asc' } })
         .where({ 
             blog2: {
                 

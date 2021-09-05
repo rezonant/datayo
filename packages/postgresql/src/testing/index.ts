@@ -19,7 +19,7 @@ export async function describe(subject : string, callback : (it: TestBuilder) =>
             await client.connect();
             await client.query(`CREATE DATABASE "${name}"`);
             await client.end();
-            console.log(`Created test DB ${name}`);
+            //console.log(`Created test DB ${name}`);
 
             DB = new pg.Client({
                 user: process.env.DATAYO_PG_TEST_USER || 'datayo',
@@ -51,7 +51,7 @@ export async function describe(subject : string, callback : (it: TestBuilder) =>
             await client.query(`DROP DATABASE "${name}"`);
             await client.end();
             
-            console.log(`Deleted test DB ${name}`);
+            //console.log(`Deleted test DB ${name}`);
             Config.instance.databases = [];
             DB = null;
         });
