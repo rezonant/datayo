@@ -1,0 +1,20 @@
+{
+  "name": "@datayo/postgresql",
+  "version": "1.0.0",
+  "description": "PostgreSQL support for Datayo",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "node dist/test.js"
+  },
+  "author": "William Lahti",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/pg": "^8.6.1"
+  },
+  "dependencies": {
+    "pg": "^8.7.1"
+  },
+  "peerDependencies": {
+    "datayo": "0.0.1"
+  }
+}
