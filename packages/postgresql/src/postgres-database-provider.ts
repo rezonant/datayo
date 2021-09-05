@@ -144,6 +144,26 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
 
     async persist<T extends Model>(instance: T): Promise<void> {
         await this.connect();
-        throw new Error("Method not implemented.");
+
+        // Persist the object itself
+
+        let query : string;
+        let type = instance.type();
+        let tableName = type.options?.tableName || this.inferTableName(type.name);
+        let attributeEntries = Array.from(instance.getAttributesAsMap().entries()).filter(([k,v]) => k !== '$instanceId');
+        let attrs = attributeEntries.map(([k,v]) => k);
+        let values = attributeEntries.map(([k,v]) => v);
+        let params : any[] = [];
+
+        if (instance.isPersisted()) {
+            // TODO: updates
+        } else {
+            query = `INSERT INTO ${tableName} (${attrs.map(x => `"${x}"`).join(', ')}) VALUES (${values.map((x,i) => `$${i+1}`)})`;
+            params = values;
+        }
+
+        await this.client.query(query, params);
+
+        // TODO: IDs
     }
 }

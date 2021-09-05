@@ -11,7 +11,7 @@ pgt.describe('PostgresDatabaseProvider', it => {
             @Attribute() name : string;
         }
 
-        it.only('persists a new item', async () => {
+        it('persists a new item', async () => {
             await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
             let book = Book.new({ name: 'foobar' });
 
