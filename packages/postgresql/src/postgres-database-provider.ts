@@ -93,6 +93,11 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             query = `${query} WHERE ${where.join(' AND ')}`;
         }
 
+        if (collection.params?.order) {
+            let order = Object.keys(collection.params.order).map(k => `${k} ${collection.params.order[k]}`);
+            query = `${query} ORDER BY ${order.join(', ')}`;
+        }
+
         if (collection.params?.limit) {
             query = `${query} LIMIT ${collection.params?.limit}`;
         }
@@ -100,12 +105,7 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         if (collection.params?.offset) {
             query = `${query} OFFSET ${collection.params?.offset}`
         }
-
-        if (collection.params?.order) {
-            let order = Object.keys(collection.params.order).map(k => `${k} ${collection.params.order[k]}`);
-            query = `${query} ORDER BY ${order.join(', ')}`;
-        }
-
+        
         //console.log(`QUERY: ${query}`);
         let result = await this.client.query(query);
         let models: Model[] = [];

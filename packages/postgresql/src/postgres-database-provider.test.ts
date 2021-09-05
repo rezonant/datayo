@@ -65,4 +65,19 @@ pgt.describe('PostgresDatabaseProvider', it => {
         expect(books[1].name).to.equal('foobar');
         expect(books[0].name).to.equal('foobaz');
     });
+    it.only('respects offset', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().orderBy({ name: 'asc' }).limit(3).offset(1);
+        expect(books.length).to.equal(3);
+        expect(books[0].name).to.equal('baz');
+        expect(books[1].name).to.equal('foo');
+        expect(books[2].name).to.equal('foobar');
+        
+    }); 
 });
