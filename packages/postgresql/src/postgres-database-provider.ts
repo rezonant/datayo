@@ -130,7 +130,7 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             query = query.replace('?', `$${i+1}`);
         }
 
-        console.log(`QUERY: ${query}`);
+        //console.log(`QUERY: ${query}`);
         let result = await this.client.query(query, params);
         let models: Model[] = [];
 
