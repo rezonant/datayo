@@ -83,10 +83,30 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         let params = [];
             
         for (let key of Object.keys(collection.criteria)) {
-            let oper = '=';
 
-            where.push(`"${key}" ${oper} ?`);
-            params.push(collection.criteria[key]);
+            if (typeof collection.criteria[key] === 'object') {
+                let opers = collection.criteria[key];
+                for (let oper of ['includes', 'startsWith', 'endsWith', 'not']) {
+                    if (!(oper in opers))
+                        continue;
+                    if (oper === 'includes') {
+                        where.push(`"${key}" LIKE ?`);
+                        params.push(`%${opers[oper]}%`);
+                    } else if (oper === 'startsWith') {
+                        where.push(`"${key}" LIKE ?`);
+                        params.push(`${opers[oper]}%`);
+                    } else if (oper === 'endsWith') {
+                        where.push(`"${key}" LIKE ?`);
+                        params.push(`%${opers[oper]}`);
+                    } else if (oper === 'not') {
+                        where.push(`"${key}" != ?`);
+                        params.push(opers[oper]);
+                    }
+                }
+            } else {
+                where.push(`"${key}" = ?`);
+                params.push(collection.criteria[key]);
+            }
         }
 
         if (where.length > 0) {
@@ -94,7 +114,7 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         }
 
         if (collection.params?.order) {
-            let order = Object.keys(collection.params.order).map(k => `${k} ${collection.params.order[k]}`);
+            let order = Object.keys(collection.params.order).map(k => `"${k}" ${collection.params.order[k]}`);
             query = `${query} ORDER BY ${order.join(', ')}`;
         }
 
@@ -106,8 +126,12 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             query = `${query} OFFSET ${collection.params?.offset}`
         }
         
-        //console.log(`QUERY: ${query}`);
-        let result = await this.client.query(query);
+        for (let i = 0; i < params.length; ++i) {
+            query = query.replace('?', `$${i+1}`);
+        }
+
+        console.log(`QUERY: ${query}`);
+        let result = await this.client.query(query, params);
         let models: Model[] = [];
 
         return result.rows.map(row => <T><unknown>collection.type.new(row));

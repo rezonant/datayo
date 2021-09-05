@@ -65,7 +65,7 @@ pgt.describe('PostgresDatabaseProvider', it => {
         expect(books[1].name).to.equal('foobar');
         expect(books[0].name).to.equal('foobaz');
     });
-    it.only('respects offset', async () => {
+    it('respects offset', async () => {
         class Book extends Model {
             @Attribute() name : string;
         }
@@ -78,6 +78,72 @@ pgt.describe('PostgresDatabaseProvider', it => {
         expect(books[0].name).to.equal('baz');
         expect(books[1].name).to.equal('foo');
         expect(books[2].name).to.equal('foobar');
-        
+    }); 
+    it('respects startsWith', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().where({ name: { startsWith: 'b' }}).orderBy({ name: 'asc' })
+        expect(books.length).to.equal(2);
+        expect(books[0].name).to.equal('bar');
+        expect(books[1].name).to.equal('baz');
+    }); 
+    it('respects endsWith', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().where({ name: { endsWith: 'z' }}).orderBy({ name: 'asc' })
+        expect(books.length).to.equal(2);
+        expect(books[0].name).to.equal('baz');
+        expect(books[1].name).to.equal('foobaz');
+    }); 
+    it('respects includes', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().where({ name: { includes: 'o' }}).orderBy({ name: 'asc' })
+        expect(books.length).to.equal(3);
+        expect(books[0].name).to.equal('foo');
+        expect(books[1].name).to.equal('foobar');
+        expect(books[2].name).to.equal('foobaz');
+    }); 
+    it('respects not', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().where({ name: { not: 'baz' }}).orderBy({ name: 'asc' })
+        expect(books.length).to.equal(4);
+        expect(books[0].name).to.equal('bar');
+        expect(books[1].name).to.equal('foo');
+        expect(books[2].name).to.equal('foobar');
+        expect(books[3].name).to.equal('foobaz');
+    }); 
+    it('respects where-equal', async () => {
+        class Book extends Model {
+            @Attribute() name : string;
+        }
+
+        await pgt.DB.query(`CREATE TABLE books ( name VARCHAR NULL )`);
+        await pgt.DB.query(`INSERT INTO books (name) VALUES ('foo'), ('bar'), ('baz'), ('foobar'), ('foobaz')`);
+
+        let books = await Book.all().where({ name: 'baz' }).orderBy({ name: 'asc' })
+        expect(books.length).to.equal(1);
+        expect(books[0].name).to.equal('baz');
     }); 
 });
