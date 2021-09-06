@@ -126,9 +126,8 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             query = `${query} OFFSET ${collection.params?.offset}`
         }
         
-        for (let i = 0; i < params.length; ++i) {
+        for (let i = 0; i < params.length; ++i)
             query = query.replace('?', `$${i+1}`);
-        }
 
         //console.log(`QUERY: ${query}`);
         let result = await this.client.query(query, params);
@@ -160,18 +159,27 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
                 throw new Error(`Cannot update instance of model ${type.name}: no primary key is defined`);
             }
 
-            // TODO: updates
+            let changes = instance.getChangesAsObject();
+            let primaryKey = instance.primaryCriteria();
+
+            let changeClauses = Object.keys(changes).map(k => `${k} = ?`);
+            params.push(...Object.values(changes));
+
+            let primaryKeyClauses = Object.keys(primaryKey).map(k => `${k} = ?`);
+            params.push(...Object.values(primaryKey));
+            
+            query = `UPDATE ${tableName} SET ${changeClauses.join(', ')} WHERE ${primaryKeyClauses.join(', ')}`;
         } else {
             query = `INSERT INTO ${tableName} (${attrs.map(x => `"${x}"`).join(', ')}) VALUES (${values.map((x,i) => `$${i+1}`)}) RETURNING *`;
             params = values;
         }
 
-        let result = await this.client.query(query, params);
+        for (let i = 0; i < params.length; ++i)
+            query = query.replace('?', `$${i+1}`);
 
+        let result = await this.client.query(query, params);
         let row = result.rows[0];
 
         instance.apply(row);
-
-        // TODO: IDs
     }
 }
