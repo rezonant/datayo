@@ -134,6 +134,13 @@ export class Model {
         return this.all().where(criteria);
     }
 
+    static find<T>(this : ModelConstructor<T>, id : string | number) {
+        if (this.primaryKey.length > 1)
+            throw new Error(`Cannot use find() on models with composite primary keys (use findBy() instead)`);
+        let pkey = this.primaryKey[0];
+        return this.all().findBy(<Criteria<T>><unknown>{ [pkey.name]: id });
+    }
+
     static findBy<T>(this : ModelConstructor<T>, criteria : Criteria<T>) {
         return this.all().findBy(criteria);
     }
@@ -306,6 +313,9 @@ export class Model {
     }
 
     async save() {
+        if (!this.isChanged())
+            return true;
+
         let isPersisting = !this.isPersisted();
 
         for (let [key, attr] of this.#attributes.entries()) {
