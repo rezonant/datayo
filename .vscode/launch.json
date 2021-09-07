@@ -36,14 +36,17 @@
             "request": "launch",
             "name": "Test (postgresql)",
             "skipFiles": [
-                "<node_internals>/**"
+                "<node_internals>/**",
+                "**/node_modules/zone.js/**",
+                "**/node_modules/razmin/**"
             ],
             "program": "${workspaceFolder}/packages/postgresql/dist/test.js",
-            "preLaunchTask": "tsc: build - packages/postgresql/tsconfig.json",
+            "preLaunchTask": "@datayo/postgresql: build",
             "cwd": "${workspaceFolder}/packages/postgresql",
             
             "outFiles": [
-                "${workspaceFolder}/packages/postgresql/dist/**/*.js"
+                "${workspaceFolder}/packages/postgresql/dist/**/*.js",
+                "${workspaceFolder}/packages/datayo/dist/**/*.js"
             ]
         }
     ]
