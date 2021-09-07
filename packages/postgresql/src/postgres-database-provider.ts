@@ -129,15 +129,45 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
         for (let i = 0; i < params.length; ++i)
             query = query.replace('?', `$${i+1}`);
 
-        //console.log(`QUERY: ${query}`);
+        if (process.env.DATAYO_DIAGNOSTICS)
+            console.log(`QUERY: ${query}`);
+        
         let result = await this.client.query(query, params);
-        let models: Model[] = [];
 
+        if (process.env.DATAYO_DIAGNOSTICS) {
+            for (let row of result.rows) {
+                console.log(`Row:`);
+                for (let key of Object.keys(row)) {
+                    console.log(` - ${key}: ${row[key]}`);
+                }
+            }
+        }
         return result.rows.map(row => <T><unknown>collection.type.new(row));
     }
 
     async resolveReference<T extends Model>(reference: Reference<T, any>): Promise<T> {
         await this.connect();
+
+        if (reference.definition?.relation === 'belongs-to') {
+            let criteria = Object.keys(reference.definition?.idAttribute)
+                .map((foreignKey) => [
+                    reference.definition.idAttribute[foreignKey], 
+                    reference.context.instance.getAttribute(foreignKey)
+                ])
+                .reduce((o, [k,v]) => (o[k] = v, o), {})
+            ;
+
+            let results = await new Collection<T>(reference.type, { 
+                criteria,
+                limit: 1
+            }).resolve();
+
+            return results[0];
+            
+        } else if (reference.definition?.relation === 'has-one') {
+            // TODO
+        }
+        
         throw new Error("Method not implemented.");
     }
 
@@ -146,12 +176,9 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
 
         // Persist the object itself
 
-        let query : string;
         let type = instance.type();
         let tableName = type.options?.tableName || this.inferTableName(type.name);
-        let attributeEntries = Array.from(instance.getAttributesAsMap().entries()).filter(([k,v]) => k !== '$instanceId');
-        let attrs = attributeEntries.map(([k,v]) => k);
-        let values = attributeEntries.map(([k,v]) => v);
+        let query : string;
         let params : any[] = [];
 
         if (instance.isPersisted()) {
@@ -170,12 +197,24 @@ export class PostgresDatabaseProvider implements DatabaseProvider {
             
             query = `UPDATE ${tableName} SET ${changeClauses.join(', ')} WHERE ${primaryKeyClauses.join(', ')}`;
         } else {
+            let eligibleAttrs = type.attributeDefinitions.filter(x => !x.relation).filter(x => x.name !== '$instanceId');
+            let changes = instance.getChangesAsObject();
+            let attributeEntries = eligibleAttrs
+                .filter(k => k.name in changes)
+                .map(k => [k.name, changes[k.name]])
+            ;
+            let attrs = attributeEntries.map(([k,v]) => k);
+            let values = attributeEntries.map(([k,v]) => v);
+
             query = `INSERT INTO ${tableName} (${attrs.map(x => `"${x}"`).join(', ')}) VALUES (${values.map((x,i) => `$${i+1}`)}) RETURNING *`;
             params = values;
         }
 
         for (let i = 0; i < params.length; ++i)
             query = query.replace('?', `$${i+1}`);
+
+        if (process.env.DATAYO_DIAGNOSTICS)
+            console.log(`PERSIST QUERY: ${query}`);
 
         let result = await this.client.query(query, params);
         let row = result.rows[0];

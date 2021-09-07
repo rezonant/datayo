@@ -49,7 +49,7 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
         return (await this.limit(1))[0];
     }
 
-    private _params : CollectionParams<T, CriteriaT>;
+    protected _params : CollectionParams<T, CriteriaT>;
     private _results : T[];
     private _resultsReady : Promise<T[]>;
 
@@ -108,7 +108,8 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
     }
 
     clone() {
-        return new Collection<T, CriteriaT>(this.type, this.params, this._results);
+        let ctor = <typeof Collection>this.constructor;
+        return new ctor<T, CriteriaT>(this.type, this.params, this._results);
     }
 
     where(criteria : CriteriaT): Collection<T, CriteriaT> {
@@ -167,7 +168,7 @@ export class Collection<T, CriteriaT = Criteria<T>> implements AsyncIterable<T>,
 
 export class LiteralCollection<T extends Model> extends Collection<T> {}
 
-export class DefinedCollection<T extends Model> extends Collection<T> {
+export class DefinedCollection<T extends Model, CriteriaT = Criteria<T>> extends Collection<T, CriteriaT> {
     constructor(
         private _definition : AttributeDefinition
     ) {
@@ -176,5 +177,10 @@ export class DefinedCollection<T extends Model> extends Collection<T> {
 
     get definition() {
         return this._definition;
+    }
+
+    clone() {
+        let ctor = <typeof DefinedCollection>this.constructor;
+        return new ctor<T, CriteriaT>(this.definition);
     }
 }

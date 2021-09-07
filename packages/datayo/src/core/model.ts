@@ -1,6 +1,6 @@
 import { Attribute, AttributeDefinition } from "./attribute";
 import { ModelOptions } from "./model-options";
-import { registerAttribute, registerModelOptions, markUnchanged, markPersisted } from "./private";
+import { registerAttribute, registerModelOptions, markUnchanged, markPersisted, initializeModel } from "./private";
 import { DefinedReference, Reference } from "./reference";
 import { resolveCollection } from "./resolvers";
 import { Constructor } from "../utils";
@@ -34,14 +34,7 @@ export type Subjects<T, SubjectT> = {
  * Base class for models
  */
 export class Model {
-    /**
-     * Construct a new instance of the model. 
-     * Internal only: Use ModelType.new() instead, which is type-safe. (Typescript does 
-     * not support accepting Partial<this> in constructors, see 
-     * https://github.com/microsoft/TypeScript/issues/38038)
-     * @param attributes 
-     */
-    constructor(attributes : Record<string,any>) {
+    [initializeModel](attributes : Record<string,any>) {
         this.apply(<any>attributes);
         if (!this.hasAttributeValue('$instanceId'))
             this.$instanceId = uuid();
@@ -49,6 +42,7 @@ export class Model {
         this.notifyNewInstance();
         this.init();
         this.#initialized = true;
+        return this;
     }
 
     #initialized = false;
@@ -119,7 +113,7 @@ export class Model {
     }
 
     static new<T>(this : ModelConstructor<T>, attributes : Partial<T> = {}) {
-        return new this(attributes);
+        return new this()[initializeModel](attributes);
     }
 
     static async create<T>(this : ModelConstructor<T>, attributes : Partial<T>) {
@@ -207,7 +201,7 @@ export class Model {
             let criteria : Criteria<any>;
             value = new Collection<any>(<typeof Model>value.definition.designType);
         } else if (value instanceof DefinedReference) {
-            value = new Reference<any>(<typeof Model>value.definition.designType, null, value.definition);
+            value = new Reference<any>(<typeof Model>value.definition.designType, undefined, value.definition);
         }
 
         let definition = this.$schema.getAttribute(key);
@@ -282,6 +276,9 @@ export class Model {
     }
 
     static getAttribute(name : string) {
+        if (!this._attributeDefinitions.has(name))
+            return undefined;
+
         return Object.assign({}, this._attributeDefinitions.get(name));
     }
 
@@ -314,7 +311,7 @@ export class Model {
 
     async save() {
         if (!this.isChanged())
-            return true;
+            return this;
 
         let isPersisting = !this.isPersisted();
 
@@ -324,6 +321,9 @@ export class Model {
 
             let defn = this.type().getAttribute(key);
             
+            if (!defn) 
+                continue;
+
             if (!defn.relation)
                 continue;
 

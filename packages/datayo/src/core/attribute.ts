@@ -1,3 +1,5 @@
+import { Reference } from ".";
+import { Collection } from "./collection";
 import { Model } from "./model";
 import { registerAttribute } from "./private";
 
@@ -61,6 +63,8 @@ export function Id() {
      * 
      */
     idAttribute? : Record<string,string>;
+    via? : (model : Model) => Reference<any> | Collection<any>;
+    through? : (model : Model) => Reference<any> | Collection<any>;
     designType? : Function;
     primaryKey? : boolean;
     relation? : 'has-one' | 'has-many' | 'belongs-to' | 'scope';

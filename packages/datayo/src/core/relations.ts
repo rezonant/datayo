@@ -1,9 +1,24 @@
 import { AttributeDefinition } from "./attribute";
-import { Model } from "./model";
+import { Model, ModelConstructor } from "./model";
 import { registerAttribute } from "./private";
-import { Constructor } from "../utils";
-import { Collection, DefinedCollection } from "./collection";
+import { Constructor, upperCamelCase } from "../utils";
+import { Collection, CollectionParams, DefinedCollection } from "./collection";
 import { DefinedReference, Reference } from "./reference";
+import { Criteria } from "./criteria";
+import { lowerCamelCase } from "../utils";
+import { Attribute } from ".";
+
+export class HasManyCollection<T extends Model, CriteriaT = Criteria<T>> extends DefinedCollection<T, CriteriaT> {
+    through<U extends Model>(
+        through : (model : T) => Collection<U> | Reference<U>, 
+        via : (model : U) => Reference<T> | Collection<T, CriteriaT>
+    ) {
+        return new HasManyCollection<T>(Object.assign({}, this.definition, <AttributeDefinition>{
+            through,
+            via
+        }));
+    }
+}
 
 /**
  * The model specified in HasMany() has a local reference to this model,
@@ -11,12 +26,13 @@ import { DefinedReference, Reference } from "./reference";
  * @param type 
  * @returns 
  */
- export function HasMany<T extends Model>(type : Constructor<T>, options? : HasManyOptions): Collection<T> {
-    options.idAttribute = normalizeIdAttribute(options.idAttribute);
-
-    return new DefinedCollection<T>({
+ export function HasMany<T extends Model>(type : Constructor<T>, options? : HasManyOptions<Model, T>) {
+    return new HasManyCollection<T>({
         relation: 'has-many',
-        designType: type
+        designType: type,
+        idAttribute: normalizeIdAttribute(options?.idAttribute),
+        via: options.via,
+        through: options.through
     });
 }
 
@@ -28,17 +44,19 @@ export interface HasOneOptions {
     idAttribute? : string | string[] | Record<string,string>;
 }
 
-export interface HasManyOptions {
+export interface HasManyOptions<SelfT = Model, SubjectT = Model> {
     /**
      * The ID attribute on the other model that should be used
      * for relating this record to the others
      */
     idAttribute? : string | string[] | Record<string,string>;
 
+    via? : (model : SubjectT) => Reference<any>
+
     /**
      * Specify a different HasMany relation on this model that this relation is found through.
      */
-    through? : string;
+    through? : (model : SelfT) => Reference<any> | Collection<any>;
 
     /**
      * Specifies the relation on the objects of the "through" relation that 
@@ -88,13 +106,22 @@ function normalizeIdAttribute(idAttribute : string | string[] | Record<string,st
  * @param type 
  * @returns 
  */
-export function BelongsTo<T extends Model>(type : Constructor<T>, options? : BelongsToOptions): Reference<T> {
-    options.idAttribute = normalizeIdAttribute(options.idAttribute);
+export function BelongsTo<T extends Model>(type : ModelConstructor<T>, options? : BelongsToOptions): Reference<T> {
+    
+    let defaultIdAttribute = type.primaryKey
+        .reduce(
+            (idAttr, id) => (
+                idAttr[lowerCamelCase(type.name) + upperCamelCase(id.name)] = id.name, 
+                idAttr
+            ), 
+            <Record<string,string>>{}
+        )
+    ;
 
     return new DefinedReference<T>({
         relation: 'belongs-to',
         designType: type,
-        idAttribute: options.idAttribute
+        idAttribute: normalizeIdAttribute(options?.idAttribute || defaultIdAttribute)
     });
 }
 
@@ -116,9 +143,57 @@ export function Relation() {
             set: function (this : Model, value) {
                 if (value instanceof DefinedCollection) {
                     Object.assign(definition, value.definition);
+
+                    if (!definition.idAttribute) {
+                        definition.idAttribute = this.type().primaryKey
+                            .reduce(
+                                (idAttr, id) => (
+                                    idAttr[lowerCamelCase(this.type().name) + upperCamelCase(id.name)] = id.name, 
+                                    idAttr
+                                ), 
+                                <Record<string,string>>{}
+                            )
+                        ;
+                    }
+
                     this.setAttribute(propertyKey, value);
                 } else if (value instanceof DefinedReference) {
                     Object.assign(definition, value.definition);
+
+                    // Create attribute definition(s) for idAttribute
+
+                    if (definition.relation === 'belongs-to') {
+                        let remoteType = <typeof Model>definition.designType;
+                        for (let key of Object.keys(definition.idAttribute)) {
+                            let primaryAttr = remoteType.getAttribute(definition.idAttribute[key]);
+
+                            if (!primaryAttr)
+                                throw new Error(`Cannot find primary attribute '${definition.idAttribute[key]}' on type ${remoteType.name}`);
+                            
+                            if (!$schema.getAttribute(key)) {
+                                Reflect.defineMetadata('design:type', primaryAttr.designType, $schema.prototype, key);
+                                Attribute()($schema.prototype, key);
+                            }
+                        }
+                    }
+                    
+                    if (!definition.idAttribute) {
+                        let identityModel = definition.relation === 'has-one'
+                            ? this.type() 
+                            : <typeof Model>definition.designType
+                        ;
+
+                        definition.idAttribute = identityModel.primaryKey
+                            .reduce(
+                                (idAttr, id) => (
+                                    idAttr[lowerCamelCase(identityModel.name) + upperCamelCase(id.name)] = id.name, 
+                                    idAttr
+                                ), 
+                                <Record<string,string>>{}
+                            )
+                        ;
+                    }
+                    
                     this.setAttribute(propertyKey, value);
                 } else {
                     // This is a real assignment at runtime.
@@ -130,6 +205,8 @@ export function Relation() {
                             if (instance) {
                                 // The local idAttribute must be updated
                                 for (let key of Object.keys(definition.idAttribute)) {
+                                    if (process.env.DATAYO_DIAGNOSTICS)
+                                        console.log(`belongs-to assign: setting ${this}.${key} = <that>.${definition.idAttribute[key]}`);
                                     this.setAttribute(key, instance.getAttribute(definition.idAttribute[key]));
                                 }
                             }

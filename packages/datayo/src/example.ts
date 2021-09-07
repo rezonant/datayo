@@ -20,6 +20,7 @@ export class Frog extends Model {
 export class User extends Model {
     @Id() id : string;
     @Relation() blog = HasOne(Blog);
+    @Relation() posts = HasMany(Post).through(u => u.blog, b => b.posts)
 }
 
 export class Post extends Model {

@@ -32,7 +32,7 @@ export class Reference<T extends Model, PrimaryKey = any> implements PromiseLike
     }
 
     clone(): Reference<T> {
-        return new Reference<T>(this.type, this.id, null);
+        return new Reference<T>(this.type, this.id);
     } 
 
     withContext(context : ReferenceContext) {
@@ -64,8 +64,7 @@ export class Reference<T extends Model, PrimaryKey = any> implements PromiseLike
         if (this._ready)
             return await this._ready;
         
-        this._result = await (this._ready = this.fetch());
-        return this;
+        return this._result = await (this._ready = this.fetch());
     }
 
     async then<TResult1 = T, TResult2 = never>(onfulfilled?: (value: T) => TResult1 | PromiseLike<TResult1>, onrejected?: (reason: any) => TResult2 | PromiseLike<TResult2>): Promise<TResult1 | TResult2> {
@@ -90,7 +89,7 @@ export class DefinedReference<T extends Model> extends Reference<T> {
     constructor(
         private _definition : AttributeDefinition
     ) {
-        super(null, null, null);
+        super(null, null);
     }
 
     get definition() {

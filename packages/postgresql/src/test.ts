@@ -5,6 +5,9 @@ import * as path from 'path';
 
 suite()
     .withOptions({
+        execution: {
+            timeout: 0
+        },
         reporting: {
             reporters: [
                 new ConsoleReporter(),
